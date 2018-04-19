@@ -16,9 +16,11 @@ public class ServerController {
 	private LinkedList<ClientConnectionThread> lobbyQueue = new LinkedList<ClientConnectionThread>();
 
 	private int port;
+	private GameEngine g;
 	
 	public ServerController(int port) {
 		this.port = port;
+		this.g = new GameEngine();
 	}
 	
 	public void start() {
