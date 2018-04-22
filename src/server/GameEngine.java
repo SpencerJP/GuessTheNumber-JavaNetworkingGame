@@ -7,12 +7,14 @@ public class GameEngine {
 	public static final int MIN_DIGITS = 3;
 	public static final int MAX_DIGITS = 8;
 	
+	String currentCode;
+	
 	
 	public GameEngine() {
 		
 	}
 	
-	public int generateCode(int digitCount) {
+	public String generateCode(int digitCount) {
 		String randomNumString = "";
 		ArrayList<String> digitsAlreadyUsed = new ArrayList<String>();
 
@@ -33,7 +35,28 @@ public class GameEngine {
 		    }
 	    }
 	    
-	    return Integer.parseInt(randomNumString);
+	    currentCode = randomNumString;
+	    
+	    return currentCode;
+	}
+	
+	public String playerGuess(String guessAttempt) {
+		int correctPlaces = 0;
+		int incorrectPlaces = 0;
+		for(int i = 0; i < currentCode.length(); i++) {
+			char currentDigit = guessAttempt.charAt(i);
+			if (currentCode.charAt(i) == currentDigit) {
+				correctPlaces++;
+			} else {
+				for(int j = 0; j < currentCode.length(); j++) {
+					if (currentCode.charAt(j) == currentDigit) {
+						incorrectPlaces++;
+					}
+				}
+			}
+		}
+		
+		return "Correct Places: " + correctPlaces + ", Incorrect Places: " + incorrectPlaces;
 	}
 	
 		
