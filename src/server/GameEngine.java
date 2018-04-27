@@ -1,6 +1,7 @@
 package server;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 public class GameEngine {
@@ -8,6 +9,7 @@ public class GameEngine {
 	public static final int MAX_DIGITS = 8;
 	
 	String currentCode;
+	HashMap<ClientConnectionThread, String> scoreBoard = new HashMap<ClientConnectionThread, String>();
 	
 	
 	public GameEngine() {
@@ -40,7 +42,12 @@ public class GameEngine {
 	    return currentCode;
 	}
 	
-	public String playerGuess(String guessAttempt) {
+	public String playerGuess(String guessAttempt, ClientConnectionThread player) {
+		
+		if (guessAttempt.equals(currentCode)) {
+			updateScoreboard("win", player);
+			return "correct!";
+		}
 		int correctPlaces = 0;
 		int incorrectPlaces = 0;
 		for(int i = 0; i < currentCode.length(); i++) {
@@ -59,5 +66,12 @@ public class GameEngine {
 		return "Correct Places: " + correctPlaces + ", Incorrect Places: " + incorrectPlaces;
 	}
 	
+	private void updateScoreboard(String string, ClientConnectionThread player) {
+		// TODO Auto-generated method stub
 		
+	}
+
+	public String constructScoreBoard() {
+		return new String();
+	}
 }

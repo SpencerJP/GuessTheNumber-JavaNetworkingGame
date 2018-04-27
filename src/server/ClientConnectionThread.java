@@ -25,9 +25,14 @@ public class ClientConnectionThread extends Thread {
 	
 	private NetMessage netmsg;
 	
-	boolean quit = false;
+	private boolean quit = false;
+	
+	public boolean readyForPostGame = false;
 
 	public boolean ingame = false;
+	
+	 // without this the player could hack the program and force it to start with the digits it wanted
+	public boolean hasPermissionToSelectDigits = false;
 
 	public ClientConnectionThread(ServerController controller, Socket socket, int uniqueId) {
 		this.c = controller;
@@ -67,10 +72,26 @@ public class ClientConnectionThread extends Thread {
 			case MESSAGE:
 				//stuff
 			case GUESS:
-				String guessResponse = this.c.getGameEngine().playerGuess(message);
+				String guessResponse = this.c.getGameEngine().playerGuess(message, this);
 				NetMessage responseMessage = new NetMessage(MessageType.GUESS, guessResponse);
 				sendMsg(responseMessage);
 				break;
+			case FIRSTPLAYERCHOOSESDIGITSIZE:
+			
+				if (hasPermissionToSelectDigits) {
+					try {
+						int digits = Integer.parseInt(message); 
+						synchronized(c.getGameEngine()) {
+							c.getGameEngine().generateCode(digits);
+							c.getGameEngine().notify();
+						};
+												
+					}
+					catch (NumberFormatException e) {
+						NetMessage responseMessage2 = new NetMessage(MessageType.MESSAGE, "Not valid digits.");
+						sendMsg(responseMessage2);
+					}
+				}
 			default:
 				break;
 			}

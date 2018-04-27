@@ -15,6 +15,8 @@ import shared.*;
 
 public class ServerController {
 
+	public static final int MAX_INGAME_PLAYERS = 3;
+
 	private Logger logger = Logger.getLogger("server-info");
 	
 	private LinkedList<ClientConnectionThread> lobbyQueue = new LinkedList<ClientConnectionThread>();
@@ -43,22 +45,8 @@ public class ServerController {
 				
 				if (lobbyQueue.size() >= 3 && s == null) {
 					log("Got enough players, starting game...");
-					for(int i = 0; i < 3; i++) {
-						
-						ClientConnectionThread c = lobbyQueue.poll(); // get first in queue
-						
-						c.ingame = true;
-						NetMessage gameStateUpdate = new NetMessage(MessageType.GAMESTATEUPDATE, "1");
-						c.sendMsg(gameStateUpdate);
-						if (i == 0) { // if first player, tell them to pick the digit size
-							NetMessage chooseDigitSize = new NetMessage(MessageType.FIRSTPLAYERCHOOSESDIGITSIZE, ".");
-							c.sendMsg(chooseDigitSize);
-						}
-					
-						currentPlayers.add(c); // add them to the current player list
-						lobbyQueue.offer(c); // move them to back of queue
-						
-					}
+					ServerGameThread sgt = new ServerGameThread(this);
+					sgt.run();
 				}
 				
 				log("Server waiting for Clients on port " + port + ".");
@@ -105,7 +93,7 @@ public class ServerController {
 	public void broadcast(NetMessage msg, boolean onlyInGame) {
 		if (onlyInGame) {
 			for(int i = lobbyQueue.size(); --i >= 0;) {
-				ClientConnectionThread c = currentPlayers.get(i);
+				ClientConnectionThread c = getCurrentPlayers().get(i);
 				// try to write to the Client if it fails remove it from the list
 				if(!c.sendMsg(msg)) {
 					lobbyQueue.remove(i);
@@ -125,7 +113,11 @@ public class ServerController {
 		}
 	}
 
-	private void log(String s) {
+	public ArrayList<ClientConnectionThread> getCurrentPlayers() {
+		return currentPlayers;
+	}
+
+	void log(String s) {
 		logger.log(Level.INFO, s);
 	}
 }
