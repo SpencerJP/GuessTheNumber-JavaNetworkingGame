@@ -67,8 +67,7 @@ public class GameEngine {
 	}
 	
 	private void updateScoreboard(String string, ClientConnectionThread player) {
-		// TODO Auto-generated method stub
-		
+			scoreBoard.	
 	}
 
 	public String constructScoreBoard() {

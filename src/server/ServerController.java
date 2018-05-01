@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import shared.*;
+import shared.NetMessage;
 
 
 public class ServerController {
@@ -43,7 +43,7 @@ public class ServerController {
 			while(!quit) 
 			{
 				
-				if (lobbyQueue.size() >= 3 && s == null) {
+				if (lobbyQueue.size() >= MAX_INGAME_PLAYERS && s == null) {
 					log("Got enough players, starting game...");
 					ServerGameThread sgt = new ServerGameThread(this);
 					sgt.run();
