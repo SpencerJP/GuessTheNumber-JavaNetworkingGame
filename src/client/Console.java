@@ -1,23 +1,27 @@
 package client;
 
-import java.util.InputMismatchException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Scanner;
 
 public class Console {
 	
-	Scanner scanner;
+	private BufferedReader br;
 	public Console() {
-		scanner = new Scanner(System.in);
+		br = new BufferedReader(new InputStreamReader(System.in));
 	}
 	
-	public int getInt() {
+	public int getInt() throws IOException {
 		boolean quit = false;
 		while(!quit) {
 			try {
-				int toReturn = scanner.nextInt();
-				return toReturn;
+				String line;
+				while ((line = br.readLine()) != null) {
+					return Integer.parseInt(line);
+				}
 			}
-			catch(InputMismatchException e) {
+			catch(NumberFormatException e) {
 				System.out.println("Not a number, try again.");
 				continue;
 			}
@@ -26,8 +30,12 @@ public class Console {
 		return -1; // should never reach this, fix this for later so user doesn't get stuck in a loop
 	}
 	
-	public String getString() {
-		return scanner.nextLine();
+	public String getString() throws IOException {
+        String line;
+		while ((line = br.readLine()) != null) {
+            return line;
+        }
+		return "";
 	}
 	
 	

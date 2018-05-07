@@ -1,15 +1,13 @@
 package server;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
 
 public class GameEngine {
 	public static final int MIN_DIGITS = 3;
 	public static final int MAX_DIGITS = 8;
 	
-	String currentCode;
-	HashMap<ClientConnectionThread, String> scoreBoard = new HashMap<ClientConnectionThread, String>();
+	public String currentCode;
 	
 	
 	public GameEngine() {
@@ -38,14 +36,12 @@ public class GameEngine {
 	    }
 	    
 	    currentCode = randomNumString;
-	    
 	    return currentCode;
 	}
 	
-	public String playerGuess(String guessAttempt, ClientConnectionThread player) {
+	public String playerGuess(String guessAttempt) {
 		
 		if (guessAttempt.equals(currentCode)) {
-			updateScoreboard("win", player);
 			return "correct!";
 		}
 		int correctPlaces = 0;
@@ -66,8 +62,17 @@ public class GameEngine {
 		return "Correct Places: " + correctPlaces + ", Incorrect Places: " + incorrectPlaces;
 	}
 	
-	private void updateScoreboard(String string, ClientConnectionThread player) {
-		// TODO Auto-generated method stub
+	void updateScoreboard(String string, ServerConnectionThread player) {
+		if (string.equals("win")) {
+			player.getScore().incrementGuesses();
+			player.getScore().setWinner(true);
+		}
+		if (string.equals("guess")) {
+			player.getScore().incrementGuesses();
+		}
+		if (string.equals("forfeit")) {
+			player.getScore().forfeit();
+		}
 		
 	}
 

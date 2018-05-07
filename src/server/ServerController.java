@@ -15,18 +15,20 @@ import shared.*;
 
 public class ServerController {
 
-	public static final int MAX_INGAME_PLAYERS = 3;
+	public static final int MAX_INGAME_PLAYERS = 2;
 
 	private Logger logger = Logger.getLogger("server-info");
 	
-	private LinkedList<ClientConnectionThread> lobbyQueue = new LinkedList<ClientConnectionThread>();
+	private LinkedList<ServerConnectionThread> lobbyQueue = new LinkedList<ServerConnectionThread>();
 
-	private ArrayList<ClientConnectionThread> currentPlayers = new ArrayList<ClientConnectionThread>();
+	ArrayList<ServerConnectionThread> currentPlayers = new ArrayList<ServerConnectionThread>();
 	
 	private int port;
 	private GameEngine g;
 	private int uniqueId = 0;
 	private ServerGameThread s = null;
+
+	public int digitSize; // digitSize to network through the program
 	
 	public ServerController(int port) {
 		this.port = port;
@@ -43,19 +45,17 @@ public class ServerController {
 			while(!quit) 
 			{
 				
-				if (lobbyQueue.size() >= 3 && s == null) {
+				if (lobbyQueue.size() >= MAX_INGAME_PLAYERS && s == null) {
 					log("Got enough players, starting game...");
 					ServerGameThread sgt = new ServerGameThread(this);
-					sgt.run();
+					sgt.start();
 				}
 				
 				log("Server waiting for Clients on port " + port + ".");
 				
 				Socket socket = serverSocket.accept();
-				
-				if(!quit)
-					break;
-				ClientConnectionThread t = new ClientConnectionThread(this, socket, ++uniqueId);
+				log("Server accepting new client");
+				ServerConnectionThread t = new ServerConnectionThread(this, socket, ++uniqueId);
 				
 				lobbyQueue.add(t);
 				
@@ -63,9 +63,9 @@ public class ServerController {
 			}
 			try {
 				serverSocket.close();
-				Iterator<ClientConnectionThread> iter = lobbyQueue.iterator();
+				Iterator<ServerConnectionThread> iter = lobbyQueue.iterator();
 				while(iter.hasNext()) {
-					ClientConnectionThread tc = iter.next();
+					ServerConnectionThread tc = iter.next();
 					try {
 						tc.closeStreams();
 					} catch(Exception e) {
@@ -86,14 +86,14 @@ public class ServerController {
 		return g;
 	}
 	
-	public LinkedList<ClientConnectionThread> getLobbyQueue() {
+	public LinkedList<ServerConnectionThread> getLobbyQueue() {
 		return lobbyQueue;
 	}
 	
 	public void broadcast(NetMessage msg, boolean onlyInGame) {
 		if (onlyInGame) {
 			for(int i = lobbyQueue.size(); --i >= 0;) {
-				ClientConnectionThread c = getCurrentPlayers().get(i);
+				ServerConnectionThread c = getCurrentPlayers().get(i);
 				// try to write to the Client if it fails remove it from the list
 				if(!c.sendMsg(msg)) {
 					lobbyQueue.remove(i);
@@ -103,7 +103,7 @@ public class ServerController {
 		}
 		else {
 			for(int i = lobbyQueue.size(); --i >= 0;) {
-				ClientConnectionThread c = lobbyQueue.get(i);
+				ServerConnectionThread c = lobbyQueue.get(i);
 				// try to write to the Client if it fails remove it from the list
 				if(!c.sendMsg(msg)) {
 					lobbyQueue.remove(i);
@@ -113,11 +113,22 @@ public class ServerController {
 		}
 	}
 
-	public ArrayList<ClientConnectionThread> getCurrentPlayers() {
+	public ArrayList<ServerConnectionThread> getCurrentPlayers() {
 		return currentPlayers;
 	}
 
 	void log(String s) {
 		logger.log(Level.INFO, s);
+	}
+
+	public String buildScoreBoard() {
+		String scoreboard = "";
+		Iterator<ServerConnectionThread> iter = currentPlayers.iterator();
+		while(iter.hasNext()) {
+			ServerConnectionThread ct = iter.next();
+			Score s = ct.getScore();
+			scoreboard = scoreboard + ct.clientName + ": " + s.getGuesses() + " guesses" + (s.isWinner() || s.isForfeit() ? " - " + (s.isWinner() ? " WINNER\n" : " FORFEIT\n") : "\n");
+		}
+		return scoreboard;
 	}
 }

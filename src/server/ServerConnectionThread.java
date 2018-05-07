@@ -7,9 +7,11 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.sound.sampled.Port;
+
 import shared.*;
 
-public class ClientConnectionThread extends Thread {
+public class ServerConnectionThread extends Thread {
 	
 
 	private Logger logger = Logger.getLogger("server-info");
@@ -20,8 +22,11 @@ public class ClientConnectionThread extends Thread {
 	private ObjectInputStream objectInput;
 	private ObjectOutputStream objectOutput;
 	
+
 	public String clientName;
 	public int uniqueId;
+	
+	private Score score;
 	
 	private NetMessage netmsg;
 	
@@ -34,10 +39,11 @@ public class ClientConnectionThread extends Thread {
 	 // without this the player could hack the program and force it to start with the digits it wanted
 	public boolean hasPermissionToSelectDigits = false;
 
-	public ClientConnectionThread(ServerController controller, Socket socket, int uniqueId) {
+	public ServerConnectionThread(ServerController controller, Socket socket, int uniqueId) {
 		this.c = controller;
 		this.socket = socket;
 		this.uniqueId = uniqueId;
+		this.score = new Score();
 		try
 		{
 			objectOutput = new ObjectOutputStream(socket.getOutputStream());
@@ -53,6 +59,7 @@ public class ClientConnectionThread extends Thread {
 	}
 
 	public void run() {
+		log("Thread created on port " + socket.getPort() + " for client");
 		while(!quit) {
 			try {
 				netmsg = (NetMessage) objectInput.readObject();
@@ -66,32 +73,66 @@ public class ClientConnectionThread extends Thread {
 			}
 			
 			String message = netmsg.getMessage();
-			
+			log("Server received NetMessage from client on port " + socket.getLocalPort());
 			switch(netmsg.getMessageType()) {
 				
 			case MESSAGE:
 				//stuff
+				break;
 			case GUESS:
-				String guessResponse = this.c.getGameEngine().playerGuess(message, this);
+				log("Received guess message from client.");
+
+				if (getScore().getGuesses() >= 10) {
+					// user has either won or lost already, and can no longer guess!
+					ingame = false;
+					NetMessage responseMessage = new NetMessage(MessageType.OUTOFGUESSES, "You can no longer guess, as you are out of guesses.");
+					sendMsg(responseMessage);
+					break;
+				}
+				if (getScore().isWinner()) {
+					// user has either won or lost already, and can no longer guess!
+					ingame = false;
+					NetMessage responseMessage = new NetMessage(MessageType.WINNER, "You have won this round!");
+					sendMsg(responseMessage);
+					break;
+				}
+				if (!ingame) { // check if the client is even allowed to send guess messages
+					break;
+				}
+				c.log("Sending back regular response");
+				String guessResponse = this.c.getGameEngine().playerGuess(message);
+				this.c.getGameEngine().updateScoreboard(guessResponse, this);
+				if (guessResponse.equals("correct!")) {
+					ingame = false;
+				}
 				NetMessage responseMessage = new NetMessage(MessageType.GUESS, guessResponse);
 				sendMsg(responseMessage);
 				break;
 			case FIRSTPLAYERCHOOSESDIGITSIZE:
-			
+				log("Received digit size message from client.");
 				if (hasPermissionToSelectDigits) {
 					try {
 						int digits = Integer.parseInt(message); 
+						c.digitSize = digits;
 						synchronized(c.getGameEngine()) {
 							c.getGameEngine().generateCode(digits);
+							log("Code is " + c.getGameEngine().currentCode);
 							c.getGameEngine().notify();
 						};
+
+						hasPermissionToSelectDigits = false;
 												
 					}
 					catch (NumberFormatException e) {
-						NetMessage responseMessage2 = new NetMessage(MessageType.MESSAGE, "Not valid digits.");
-						sendMsg(responseMessage2);
+						NetMessage responseMessage1 = new NetMessage(MessageType.MESSAGE, "Not valid digits.");
+						sendMsg(responseMessage1);
 					}
 				}
+				break;
+			case FORFEIT:
+				this.c.getGameEngine().updateScoreboard("forfeit", this);
+				ingame = false;
+				break;
 			default:
 				break;
 			}
@@ -120,6 +161,7 @@ public class ClientConnectionThread extends Thread {
 		catch(IOException e) {
 			log("Error sending message to client, username: " + clientName);
 		}
+		log("Sent message from server to port " + socket.getPort());
 		return true;
 	}
 
@@ -127,6 +169,15 @@ public class ClientConnectionThread extends Thread {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	public Score getScore() {
+		return score;
+	}
+
+	public void setScore(Score score) {
+		this.score = score;
+	}
+
 	
 	private void log(String s) {
 		logger.log(Level.INFO, String.format("ClientID: %s, %s", uniqueId, s));

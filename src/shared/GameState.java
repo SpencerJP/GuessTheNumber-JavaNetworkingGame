@@ -1,6 +1,6 @@
 package shared;
 
-public enum ServerState {
+public enum GameState {
 	WAITINGFORPLAYERS,
 	INGAME,
 	FINISHEDGAME
