@@ -73,8 +73,6 @@ public class GameEngine {
 		if (string.equals("forfeit")) {
 			player.getScore().forfeit();
 		}
-		
-	}
 
 	public String constructScoreBoard() {
 		return new String();
