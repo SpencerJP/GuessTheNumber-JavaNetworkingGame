@@ -35,18 +35,24 @@ public class ServerGameThread extends Thread {
 				NetMessage chooseDigitSize = new NetMessage(MessageType.FIRSTPLAYERCHOOSESDIGITSIZE, ".");
 				ct.hasPermissionToSelectDigits = true;
 				ct.sendMsg(chooseDigitSize);
-				synchronized(c.getGameEngine()) {
-			            try { 
-							c.getGameEngine().wait();
-							// digits have been decided, begin game
-							inGame();
-						} catch (InterruptedException e) {
-							c.log("Interruption error!");
-						}
-	            	}
+				
 			}
-		
 			
+		}
+		if (c.digitSize != -1) { // if digitSize has been decided already, start game (this should never occur, but is possible)
+
+			inGame();
+		}
+		else {
+			synchronized(c.getGameEngine()) { // else wait for it to be decided
+	            try { 
+					c.getGameEngine().wait();
+					// digits have been decided, begin game
+					inGame();
+				} catch (InterruptedException e) {
+					c.log("Interruption error!");
+				}
+	    	}
 		}
 	}
 	

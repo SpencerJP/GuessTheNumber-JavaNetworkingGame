@@ -62,18 +62,6 @@ public class GameEngine {
 		return "Correct Places: " + correctPlaces + ", Incorrect Places: " + incorrectPlaces;
 	}
 	
-	void updateScoreboard(String string, ServerConnectionThread player) {
-		if (string.equals("win")) {
-			player.getScore().incrementGuesses();
-			player.getScore().setWinner(true);
-		}
-		if (string.equals("guess")) {
-			player.getScore().incrementGuesses();
-		}
-		if (string.equals("forfeit")) {
-			player.getScore().forfeit();
-		}
-
 	public String constructScoreBoard() {
 		return new String();
 	}

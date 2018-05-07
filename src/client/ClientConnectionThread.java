@@ -111,6 +111,13 @@ public class ClientConnectionThread extends Thread {
 				break;
 		}
 	}
+	
+	public void closeStreams() throws Exception{
+		socket.close();
+		objectInput.close();
+		objectOutput.close();
+		
+	}
 
 	/* method to send netmessages to server */
 	public void send(NetMessage netmsg) {

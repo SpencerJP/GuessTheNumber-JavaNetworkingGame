@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import shared.NetMessage;
+import shared.Score;
 
 
 public class ServerController {
@@ -28,7 +29,7 @@ public class ServerController {
 	private int uniqueId = 0;
 	private ServerGameThread s = null;
 
-	public int digitSize; // digitSize to network through the program
+	public int digitSize = -1; // digitSize to network through the program
 	
 	public ServerController(int port) {
 		this.port = port;

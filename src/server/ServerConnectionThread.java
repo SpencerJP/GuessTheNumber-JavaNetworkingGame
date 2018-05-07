@@ -76,9 +76,6 @@ public class ServerConnectionThread extends Thread {
 			log("Server received NetMessage from client on port " + socket.getLocalPort());
 			switch(netmsg.getMessageType()) {
 				
-			case MESSAGE:
-				//stuff
-				break;
 			case GUESS:
 				log("Received guess message from client.");
 
@@ -99,9 +96,8 @@ public class ServerConnectionThread extends Thread {
 				if (!ingame) { // check if the client is even allowed to send guess messages
 					break;
 				}
-				c.log("Sending back regular response");
 				String guessResponse = this.c.getGameEngine().playerGuess(message);
-				this.c.getGameEngine().updateScoreboard(guessResponse, this);
+				updateScore(guessResponse);
 				if (guessResponse.equals("correct!")) {
 					ingame = false;
 				}
@@ -130,7 +126,7 @@ public class ServerConnectionThread extends Thread {
 				}
 				break;
 			case FORFEIT:
-				this.c.getGameEngine().updateScoreboard("forfeit", this);
+				updateScore("forfeit");
 				ingame = false;
 				break;
 			default:
@@ -166,7 +162,9 @@ public class ServerConnectionThread extends Thread {
 	}
 
 	public void closeStreams() throws Exception{
-		// TODO Auto-generated method stub
+		socket.close();
+		objectInput.close();
+		objectOutput.close();
 		
 	}
 	
@@ -176,6 +174,20 @@ public class ServerConnectionThread extends Thread {
 
 	public void setScore(Score score) {
 		this.score = score;
+	}
+	
+	void updateScore(String string) {
+		if (string.equals("win")) {
+			getScore().incrementGuesses();
+			getScore().setWinner(true);
+			return;
+		}
+		if (string.equals("forfeit")) {
+			getScore().forfeit();
+			return;
+		}
+
+		getScore().incrementGuesses();
 	}
 
 	

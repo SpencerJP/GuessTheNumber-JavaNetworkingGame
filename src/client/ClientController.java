@@ -59,7 +59,7 @@ public class ClientController {
 					case WAITINGFORPLAYERS:
 						break;
 					case INGAME:
-						if(!nextGuess.equals("initial")) { // need to wait for response from server;
+						if(!nextGuess.equals("initial") && !nextGuess.equals("lastFailed") ) { // need to wait for response from server;
 							synchronized(nextGuess) {
 								try {
 									nextGuess.wait();
@@ -79,8 +79,13 @@ public class ClientController {
 						}
 						if (remainingGuesses != 0) {
 							System.out.println("Please make a guess, the digit size is " + digitSize + ". " + remainingGuesses + " guesses remaining.");
-							getGuess();
-							nextGuess = "notInitial";
+							boolean success = getGuess();
+							if (success) {
+								nextGuess = "notInitial";
+							}
+							else {
+								nextGuess = "lastFailed";
+							}
 							break;
 						}
 					case FINISHEDGAME:
@@ -113,23 +118,27 @@ public class ClientController {
 		
 	}
 
-	private void getGuess() {
+	private boolean getGuess() {
 		String input;
 		try {
 			input = console.getString();
 			if (input.equals("q")) {
 					netmsg = new NetMessage(MessageType.FORFEIT, "");
 					cct.send(netmsg);
+					return true;
 			} else {
 				boolean valid = validateGuess(input);
 				if (valid) {
 						netmsg = new NetMessage(MessageType.GUESS, input);
 						cct.send(netmsg);
+						return true;
 				}
 			}
 		} catch (IOException e) {
 			log("Issue with IO.");
+			return false;
 		}
+		return false;
 		
 	}
 	
@@ -159,6 +168,6 @@ public class ClientController {
 		state = GameState.WAITINGFORPLAYERS;
 	}
 	void log(String s) {
-		logger.log(Level.INFO, s);
+		//logger.log(Level.INFO, s);
 	}
 }
